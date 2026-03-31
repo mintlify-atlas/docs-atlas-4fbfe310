@@ -1,0 +1,244 @@
+---
+title: 'Notes'
+description: 'Endpoints for creating, updating, deleting, and decrypting CloudBook notes.'
+---
+
+<Note>
+  All note content is AES-encrypted on the server before being stored in the database. You never read or write plaintext content directly to the database. Use `POST /api/notes/decrypt` to decrypt content after retrieving it.
+</Note>
+
+<Note>
+  `noteIndex` is **1-based**, not 0-based. The first note in a user's list is at index `1`.
+</Note>
+
+## Retrieving notes
+
+Notes are returned as part of the full user object from `GET /api/users`. Each note object has a `title` (plaintext) and a `content` field that contains an AES-encrypted ciphertext string. Pass the `content` value to `POST /api/notes/decrypt` to read the plaintext.
+
+See [Users — Get current user](/api/users#get-current-user) for full details on that endpoint.
+
+---
+
+## Create a note
+
+**`POST /api/notes`**
+
+Creates a new note for the authenticated user. The `content` is AES-encrypted server-side before being stored.
+
+#### Request headers
+
+<ParamField header="Authorization" type="string" required>
+  A valid JWT obtained from `/api/users/login` or `/api/users/register`.
+</ParamField>
+
+#### Request body
+
+<ParamField body="title" type="string" required>
+  The title of the note, stored as plaintext.
+</ParamField>
+
+<ParamField body="content" type="string" required>
+  The plaintext body of the note. The server encrypts this with AES before storing it.
+</ParamField>
+
+#### Response
+
+<ResponseField name="message" type="string">
+  Confirmation message.
+</ResponseField>
+
+#### Error codes
+
+| Status | Meaning |
+|--------|---------|
+| 400 | `title` or `content` missing from the request body. |
+| 401 | Missing or invalid JWT. |
+| 500 | Database or server error. |
+
+#### Example
+
+```bash
+curl --request POST \
+  --url https://your-domain.com/api/notes \
+  --header 'Authorization: <jwt>' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "title": "Project ideas",
+    "content": "Build a CLI tool for CloudBook."
+  }'
+```
+
+```json
+{
+  "message": "Nota subida con éxito"
+}
+```
+
+---
+
+## Update a note
+
+**`PUT /api/notes`**
+
+Updates the title, content, or both for an existing note identified by its 1-based index. The updated content is re-encrypted before being stored.
+
+#### Request headers
+
+<ParamField header="Authorization" type="string" required>
+  A valid JWT.
+</ParamField>
+
+#### Request body
+
+<ParamField body="noteIndex" type="number" required>
+  The 1-based position of the note to update in the user's notes array.
+</ParamField>
+
+<ParamField body="updatedTitle" type="string">
+  The new title for the note. If omitted, the existing title is preserved.
+</ParamField>
+
+<ParamField body="updatedContent" type="string">
+  The new plaintext content for the note. If omitted, the existing content is re-encrypted and preserved.
+</ParamField>
+
+<Note>
+  At least one of `updatedTitle` or `updatedContent` must be provided alongside `noteIndex`.
+</Note>
+
+#### Response
+
+<ResponseField name="message" type="string">
+  Confirmation message.
+</ResponseField>
+
+#### Error codes
+
+| Status | Meaning |
+|--------|---------|
+| 400 | Neither `updatedTitle` nor `updatedContent` provided, or `noteIndex` is missing. |
+| 401 | Missing or invalid JWT. |
+| 500 | Database or server error. |
+
+#### Example
+
+```bash
+curl --request PUT \
+  --url https://your-domain.com/api/notes \
+  --header 'Authorization: <jwt>' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "noteIndex": 1,
+    "updatedTitle": "Project ideas (revised)",
+    "updatedContent": "Build a CLI tool and a mobile app for CloudBook."
+  }'
+```
+
+```json
+{
+  "message": "Nota actualizada con éxito"
+}
+```
+
+---
+
+## Delete a note
+
+**`DELETE /api/notes`**
+
+Permanently removes a note from the authenticated user's notes array by its 1-based index.
+
+#### Request headers
+
+<ParamField header="Authorization" type="string" required>
+  A valid JWT.
+</ParamField>
+
+#### Request body
+
+<ParamField body="noteIndex" type="number" required>
+  The 1-based position of the note to delete.
+</ParamField>
+
+#### Response
+
+<ResponseField name="message" type="string">
+  Confirmation message.
+</ResponseField>
+
+#### Error codes
+
+| Status | Meaning |
+|--------|---------|
+| 400 | `noteIndex` missing from the request body. |
+| 401 | Missing or invalid JWT. |
+| 500 | Database or server error. |
+
+#### Example
+
+```bash
+curl --request DELETE \
+  --url https://your-domain.com/api/notes \
+  --header 'Authorization: <jwt>' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "noteIndex": 1
+  }'
+```
+
+```json
+{
+  "message": "Nota borrada con éxito"
+}
+```
+
+---
+
+## Decrypt note content
+
+**`POST /api/notes/decrypt`**
+
+Decrypts an AES-encrypted note content string and returns the plaintext. Pass the raw `content` value retrieved from `GET /api/users` directly to this endpoint.
+
+This endpoint does not require authentication, but it only processes content encrypted by the CloudBook server. Attempting to decrypt arbitrary strings will result in an empty or malformed response.
+
+#### Request body
+
+<ParamField body="content" type="string" required>
+  The AES-encrypted ciphertext string to decrypt. This should be the `content` field from a note object returned by `GET /api/users`.
+</ParamField>
+
+#### Response
+
+<ResponseField name="message" type="string">
+  Confirmation message.
+</ResponseField>
+
+<ResponseField name="content" type="string">
+  The decrypted plaintext content of the note.
+</ResponseField>
+
+#### Error codes
+
+| Status | Meaning |
+|--------|---------|
+| 403 | `content` missing from the request body. |
+| 500 | Server error during decryption. |
+
+#### Example
+
+```bash
+curl --request POST \
+  --url https://your-domain.com/api/notes/decrypt \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "content": "U2FsdGVkX1+abc123..."
+  }'
+```
+
+```json
+{
+  "message": "Desencriptación exitosa",
+  "content": "Build a CLI tool for CloudBook."
+}
+```

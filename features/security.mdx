@@ -1,0 +1,75 @@
+---
+title: 'Security'
+description: 'How CloudBook protects your notes and account with encryption, hashed passwords, and token-based sessions.'
+---
+
+CloudBook is built with a layered security model. Your note content is encrypted before it reaches the database, your password is never stored in readable form, and every API request is authenticated with a short-lived session token.
+
+<CardGroup cols={2}>
+  <Card title="AES note encryption" icon="lock">
+    Every note's body is encrypted with AES using the `crypto-js` library on the server before being written to the database. Only ciphertext is stored — plaintext content is never persisted.
+  </Card>
+  <Card title="bcrypt password hashing" icon="shield">
+    Passwords are hashed with bcrypt before storage. CloudBook never stores your password in plaintext, and the hash cannot be reversed to recover it.
+  </Card>
+  <Card title="JWT session tokens" icon="key">
+    After you log in or register, you receive a signed JWT. Every authenticated API request must include this token in the `Authorization` header. Tokens are verified server-side on each request.
+  </Card>
+  <Card title="HTTPS communication" icon="globe-lock">
+    All traffic between your client and the CloudBook server is encrypted over HTTPS, preventing interception of your data in transit.
+  </Card>
+  <Card title="Registration cancellation" icon="user-xmark">
+    When you register, you receive a cancellation token valid for 24 hours. If you didn't initiate the registration, you can use this token to reverse it before the window expires.
+  </Card>
+  <Card title="Password reset tokens" icon="rotate">
+    Password reset requests generate a short-lived token valid for 2 hours. Only the holder of that token can complete the reset, protecting you from unauthorized account changes.
+  </Card>
+</CardGroup>
+
+## Note content encryption
+
+When you create or edit a note, the `content` field is encrypted with AES using `crypto-js` on the server before the data is written to Supabase.
+
+```
+plaintext content  →  AES.encrypt(content, key)  →  ciphertext stored in DB
+```
+
+When you retrieve your notes via `GET /api/users`, the `content` field in each note object is the encrypted ciphertext. To read the original content, you send it to `POST /api/notes/decrypt`, which decrypts it server-side and returns the plaintext.
+
+<Note>
+  Note titles are stored as plain text and are not encrypted. Avoid putting sensitive information in your note titles.
+</Note>
+
+## Password security
+
+Your password is hashed with bcrypt during registration and when you change it. CloudBook compares the bcrypt hash at login — your original password is never stored anywhere in the system.
+
+<Tip>
+  Use a unique, strong password for your CloudBook account. Because bcrypt hashes are one-way, there is no way to recover a forgotten password without going through the password reset flow.
+</Tip>
+
+## Session tokens
+
+CloudBook uses JWTs (JSON Web Tokens) to manage authenticated sessions. After a successful login or registration, you receive a token that identifies your account.
+
+Include the token in every API request that requires authentication:
+
+```http
+Authorization: <your-jwt-token>
+```
+
+The server verifies the token's signature and extracts your user ID on each request. Requests with a missing or invalid token are rejected with a `401` response.
+
+## Token-based account flows
+
+### Registration cancellation
+
+After you register, CloudBook sends you a cancellation token by email. This token is valid for **24 hours**. If someone registered using your email address without your knowledge, you can use this token to cancel the registration before the window closes.
+
+### Password reset
+
+If you forget your password, you can request a reset link. The link contains a token that is valid for **2 hours**. After the window expires, you need to request a new reset link.
+
+<Note>
+  Password reset tokens are single-use and expire after 2 hours. If your reset link has expired, start a new reset request.
+</Note>

@@ -1,0 +1,269 @@
+---
+title: 'Reports'
+description: 'Endpoints for submitting and managing CloudBook bug reports.'
+---
+
+## Admin authentication
+
+The `GET /api/reports` and `DELETE /api/reports/[id]` endpoints require an **admin JWT** — a token whose payload contains the `aid` field. Obtain this token by logging in with admin credentials.
+
+### Admin login
+
+**`POST /api/admin`**
+
+Authenticates an admin user and returns a signed JWT with a 4-hour expiry. The token payload contains `aid` (the admin's ID) instead of `id`, which distinguishes it from a regular user token.
+
+<Note>
+  This endpoint is for CloudBook administrators only. Regular user accounts cannot access admin endpoints.
+</Note>
+
+#### Request body
+
+<ParamField body="username" type="string" required>
+  The admin username.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  The admin password.
+</ParamField>
+
+#### Response
+
+<ResponseField name="message" type="string">
+  Confirmation message.
+</ResponseField>
+
+<ResponseField name="token" type="string">
+  A signed admin JWT, valid for 4 hours. Pass this in the `Authorization` header of admin-only requests.
+</ResponseField>
+
+<ResponseField name="username" type="string">
+  The authenticated admin's username.
+</ResponseField>
+
+#### Error codes
+
+| Status | Meaning |
+|--------|---------|
+| 403 | `username` or `password` missing from the request body. |
+| 401 | Password does not match the admin account. |
+| 500 | Database or server error. |
+
+#### Example
+
+```bash
+curl --request POST \
+  --url https://list-app.vercel.app/api/admin \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "username": "admin",
+    "password": "adminpassword"
+  }'
+```
+
+```json
+{
+  "message": "Sesión iniciada correctamente",
+  "token": "<admin-jwt>",
+  "username": "admin"
+}
+```
+
+---
+
+## Submit a bug report
+
+**`POST /api/reports`**
+
+Submits a bug report. No authentication is required, so any user can report an issue.
+
+#### Request body
+
+<ParamField body="bug" type="string" required>
+  A description of the bug encountered.
+</ParamField>
+
+<ParamField body="steps" type="string" required>
+  Steps to reproduce the bug.
+</ParamField>
+
+<ParamField body="version" type="string" required>
+  The version of CloudBook where the bug was found (e.g., `"1.2.0"`).
+</ParamField>
+
+<ParamField body="date" type="string" required>
+  The date the bug was observed (e.g., `"2025-06-15"`).
+</ParamField>
+
+<ParamField body="device" type="string" required>
+  The device or environment where the bug occurred (e.g., `"macOS 14, Chrome 125"`).
+</ParamField>
+
+<ParamField body="email" type="string">
+  An optional contact email address. If provided, the team may follow up with you.
+</ParamField>
+
+<ParamField body="screenshot" type="string">
+  An optional screenshot URL or base64-encoded image to illustrate the bug.
+</ParamField>
+
+#### Response
+
+<ResponseField name="message" type="string">
+  Confirmation message.
+</ResponseField>
+
+#### Error codes
+
+| Status | Meaning |
+|--------|---------|
+| 403 | One or more required fields (`bug`, `steps`, `version`, `date`, `device`) are missing. |
+| 500 | Database or server error. |
+
+#### Example
+
+```bash
+curl --request POST \
+  --url https://your-domain.com/api/reports \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "bug": "Notes fail to save when the title contains special characters.",
+    "steps": "1. Create a note. 2. Add a title with an emoji. 3. Click Save.",
+    "version": "1.2.0",
+    "date": "2025-06-15",
+    "device": "Windows 11, Firefox 127",
+    "email": "jane@example.com"
+  }'
+```
+
+```json
+{
+  "message": "Reporte enviado con éxito, gracias por apoyar a CloudBook"
+}
+```
+
+---
+
+## List all bug reports
+
+**`GET /api/reports`**
+
+Returns all submitted bug reports. Requires an admin JWT — a token whose payload contains the `aid` field, issued by `POST /api/admin`.
+
+#### Request headers
+
+<ParamField header="Authorization" type="string" required>
+  A valid admin JWT (payload must include `aid`).
+</ParamField>
+
+#### Response
+
+<ResponseField name="message" type="string">
+  Confirmation message.
+</ResponseField>
+
+<ResponseField name="reports" type="object[]">
+  Array of all bug report records from the database.
+  <Expandable title="report properties">
+    <ResponseField name="bug" type="string">
+      Description of the reported bug.
+    </ResponseField>
+    <ResponseField name="steps" type="string">
+      Reproduction steps.
+    </ResponseField>
+    <ResponseField name="version" type="string">
+      CloudBook version at the time of the report.
+    </ResponseField>
+    <ResponseField name="date" type="string">
+      Date the bug was observed.
+    </ResponseField>
+    <ResponseField name="device" type="string">
+      Device or environment description.
+    </ResponseField>
+    <ResponseField name="email" type="string">
+      Contact email address, if provided.
+    </ResponseField>
+    <ResponseField name="screenshot" type="string">
+      Screenshot URL or data, if provided.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+#### Error codes
+
+| Status | Meaning |
+|--------|---------|
+| 401 | Missing JWT, or the JWT does not contain the `aid` field. |
+| 500 | Database or server error. |
+
+#### Example
+
+```bash
+curl --request GET \
+  --url https://your-domain.com/api/reports \
+  --header 'Authorization: <admin-jwt>'
+```
+
+```json
+{
+  "message": "Reportes de bugs obtenidos",
+  "reports": [
+    {
+      "bug": "Notes fail to save when the title contains special characters.",
+      "steps": "1. Create a note. 2. Add a title with an emoji. 3. Click Save.",
+      "version": "1.2.0",
+      "date": "2025-06-15",
+      "device": "Windows 11, Firefox 127",
+      "email": "jane@example.com",
+      "screenshot": ""
+    }
+  ]
+}
+```
+
+---
+
+## Delete a bug report
+
+**`DELETE /api/reports/[id]`**
+
+Deletes a single bug report by its ID. Requires an admin JWT.
+
+#### Path parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the bug report to delete.
+</ParamField>
+
+#### Request headers
+
+<ParamField header="Authorization" type="string" required>
+  A valid admin JWT (payload must include `aid`).
+</ParamField>
+
+#### Response
+
+<ResponseField name="message" type="string">
+  Confirmation message.
+</ResponseField>
+
+#### Error codes
+
+| Status | Meaning |
+|--------|---------|
+| 401 | Missing JWT, or the JWT does not contain the `aid` field. |
+| 500 | Database or server error. |
+
+#### Example
+
+```bash
+curl --request DELETE \
+  --url https://your-domain.com/api/reports/42 \
+  --header 'Authorization: <admin-jwt>'
+```
+
+```json
+{
+  "message": "Reporte eliminado correctamente"
+}
+```

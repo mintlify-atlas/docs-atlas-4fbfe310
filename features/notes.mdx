@@ -1,0 +1,139 @@
+---
+title: 'Notes'
+description: 'Create, view, edit, and delete your encrypted notes in CloudBook.'
+---
+
+Every note you create in CloudBook is stored as part of a JSON array in your account. The `title` field is stored as plain text for display purposes, while the `content` field is AES-encrypted before it reaches the server — meaning your note body is never stored in readable form.
+
+## Creating a note
+
+<Steps>
+  <Step title="Authenticate your request">
+    Include your JWT session token in the `Authorization` header. You receive this token when you log in or register.
+
+    ```http
+    POST /api/notes
+    Authorization: <your-jwt-token>
+    Content-Type: application/json
+    ```
+  </Step>
+  <Step title="Send the note data">
+    Provide both a `title` and `content` in the request body. Both fields are required.
+
+    ```json
+    {
+      "title": "Meeting agenda",
+      "content": "Discuss Q3 roadmap and assign action items."
+    }
+    ```
+  </Step>
+  <Step title="Confirm the note was saved">
+    A successful request returns a confirmation message. Your note is appended to your notes list and the `content` is AES-encrypted before storage.
+
+    ```json
+    {
+      "message": "Nota subida con éxito"
+    }
+    ```
+  </Step>
+</Steps>
+
+<Note>
+  The `content` value you send is encrypted on the server before being written to the database. The plaintext content is never persisted — only the encrypted ciphertext is stored.
+</Note>
+
+## Viewing your notes
+
+Your notes are returned as part of your user record. Send a `GET` request to `/api/users` with your JWT token in the `Authorization` header.
+
+```http
+GET /api/users
+Authorization: <your-jwt-token>
+```
+
+The response includes your notes array. Each note object has two fields:
+
+| Field     | Type   | Description                              |
+| --------- | ------ | ---------------------------------------- |
+| `title`   | string | The note title, stored as plain text.    |
+| `content` | string | The note body, AES-encrypted ciphertext. |
+
+<Note>
+  The `content` returned from this endpoint is always encrypted. To read the note body, you need to decrypt it separately using `POST /api/notes/decrypt`.
+</Note>
+
+## Decrypting note content
+
+To read the actual content of a note, send the encrypted `content` value to the decrypt endpoint.
+
+<Steps>
+  <Step title="Copy the encrypted content">
+    Take the `content` value from one of your notes exactly as returned by `GET /api/users`.
+  </Step>
+  <Step title="Send it to the decrypt endpoint">
+    No authentication token is required for this endpoint.
+
+    ```http
+    POST /api/notes/decrypt
+    Content-Type: application/json
+    ```
+
+    ```json
+    {
+      "content": "<encrypted-ciphertext>"
+    }
+    ```
+  </Step>
+  <Step title="Read the decrypted result">
+    The response contains the original plaintext content under the `content` key.
+
+    ```json
+    {
+      "message": "Desencriptación exitosa",
+      "content": "Discuss Q3 roadmap and assign action items."
+    }
+    ```
+  </Step>
+</Steps>
+
+## Editing a note
+
+To update a note, send a `PUT` request with the index of the note you want to change. Note indexes are **1-based** — the first note in your list is index `1`.
+
+You can update the `title`, the `content`, or both. Any field you omit keeps its existing value.
+
+```http
+PUT /api/notes
+Authorization: <your-jwt-token>
+Content-Type: application/json
+```
+
+```json
+{
+  "noteIndex": 1,
+  "updatedTitle": "Updated meeting agenda",
+  "updatedContent": "Revised Q3 roadmap and new action items."
+}
+```
+
+<Note>
+  When you update a note, the new `content` value is re-encrypted before being saved, just like when you first create it.
+</Note>
+
+## Deleting a note
+
+To remove a note, send a `DELETE` request with the 1-based index of the note.
+
+```http
+DELETE /api/notes
+Authorization: <your-jwt-token>
+Content-Type: application/json
+```
+
+```json
+{
+  "noteIndex": 2
+}
+```
+
+A successful deletion shifts the indexes of any notes that followed the deleted one, so note `3` becomes note `2`, and so on.

@@ -1,0 +1,134 @@
+---
+title: "Changelog"
+description: "A full history of CloudBook releases, from the initial build to the latest stable version."
+---
+
+This page tracks every release of CloudBook, including stable versions, beta builds, and early in-development milestones.
+
+<AccordionGroup>
+  <Accordion title="2.1.0">
+    - New release.
+    - Added a Markdown information page explaining the supported MD formatting syntax.
+  </Accordion>
+
+  <Accordion title="2.0.3a">
+    - Fixed an error in the roadmap.
+  </Accordion>
+
+  <Accordion title="2.0.3">
+    - New release.
+  </Accordion>
+
+  <Accordion title="2.0.2">
+    - New release.
+  </Accordion>
+
+  <Accordion title="2.0.1">
+    - Fixed a bug on the bug reports page.
+  </Accordion>
+
+  <Accordion title="2.0.0">
+    - Added a password recovery flow so users can regain access to their account if they forget their password.
+    - Users can now verify whether their email was registered without their knowledge and delete the account if it wasn't them.
+    - Updated the app logo.
+    - Generated a token-based account deletion page.
+    - Generated a token-based password reset page.
+    - Integrated Nodemailer for sending account verification and recovery emails.
+    - Integrated the Node.js `crypto` module for secure token generation.
+    - Improved routing and frontend code optimization.
+    - Bug fixes.
+  </Accordion>
+
+  <Accordion title="1.1.1">
+    - Fixed a bug when logging in with an email that doesn't exist.
+    - Fixed a bug when registering with an email that is already in use.
+    - Preparation for upcoming features and improvements.
+  </Accordion>
+
+  <Accordion title="1.1.0">
+    - Added backend error indicators for clearer failure feedback.
+    - Reports can now be deleted from the admin panel (for reports that are resolved or no longer relevant).
+    - Improved visibility and usability of the admin login page.
+  </Accordion>
+
+  <Accordion title="1.0.1">
+    - Added download links for the new app versions.
+  </Accordion>
+
+  <Accordion title="1.0.0 — Initial stable release">
+    - Backend complete, pending additional bug fixes and future updates.
+    - Web app ready, pending new app version uploads and bug fixes.
+  </Accordion>
+</AccordionGroup>
+
+## Beta
+
+<AccordionGroup>
+  <Accordion title="Beta 3.1">
+    - Released new Android (APK) and Windows builds.
+    - Page creation in progress.
+  </Accordion>
+
+  <Accordion title="Beta 3.0">
+    - Notes can now be encrypted and decrypted.
+    - Fixed critical bugs.
+    - Ready for the first stable release after a few more tests.
+  </Accordion>
+
+  <Accordion title="Beta 2.1b">
+    - Fixed the APK file.
+  </Accordion>
+
+  <Accordion title="Beta 2.1a">
+    - Fixed the Windows EXE file.
+  </Accordion>
+
+  <Accordion title="Beta 2.1">
+    - Added Windows (EXE) and Android (APK) download builds.
+  </Accordion>
+
+  <Accordion title="Beta 2.0">
+    - Added a server status endpoint to check both the database and the server.
+  </Accordion>
+
+  <Accordion title="Beta 1.0">
+    - Built the complete web app.
+    - Download files not yet included.
+    - Test mode functional.
+  </Accordion>
+</AccordionGroup>
+
+## Indev
+
+<AccordionGroup>
+  <Accordion title="Indev 3.2">
+    - Fixed errors in GET requests; removed the request body where it was not needed.
+  </Accordion>
+
+  <Accordion title="Indev 3.1">
+    - Fixed errors in GET requests.
+  </Accordion>
+
+  <Accordion title="Indev 3.0">
+    - Added GET method support for users and notes.
+    - Added API key middleware to prevent data leaks and unauthorized access.
+    - Added OPTIONS method with CORS support for the users endpoint.
+  </Accordion>
+
+  <Accordion title="Indev 2.1">
+    - Fixed a bug in note encryption.
+  </Accordion>
+
+  <Accordion title="Indev 2.0">
+    - Backend complete.
+    - Login and registration functional and bug-free.
+    - Note encryption implemented.
+  </Accordion>
+
+  <Accordion title="Indev 1.0">
+    - Initial app scaffolding and configuration.
+    - Connected the API.
+    - Created the license file.
+    - Created the changelog.
+  </Accordion>
+</AccordionGroup>

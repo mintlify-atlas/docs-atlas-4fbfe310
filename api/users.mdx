@@ -1,0 +1,439 @@
+---
+title: 'Users'
+description: 'Endpoints for registering, authenticating, and managing CloudBook user accounts.'
+---
+
+## Authentication
+
+### Register
+
+<br />
+
+**`POST /api/users/register`**
+
+Creates a new user account. On success, sends a welcome email with a cancel-signup link valid for 24 hours and returns a signed JWT.
+
+#### Request body
+
+<ParamField body="email" type="string" required>
+  The email address for the new account.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  The password for the new account. Stored as a bcrypt hash.
+</ParamField>
+
+#### Response
+
+<ResponseField name="message" type="string">
+  Confirmation message.
+</ResponseField>
+
+<ResponseField name="token" type="string">
+  Signed JWT containing the new user's `id`. Use this token as the `Authorization` header for authenticated requests.
+</ResponseField>
+
+#### Error codes
+
+| Status | Meaning |
+|--------|---------|
+| 400 | `email` or `password` missing from the request body. |
+| 409 | An account with this email address already exists. |
+| 500 | Database or server error. |
+
+#### Example
+
+```bash
+curl --request POST \
+  --url https://your-domain.com/api/users/register \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "email": "jane@example.com",
+    "password": "securepassword123"
+  }'
+```
+
+```json
+{
+  "message": "Registro hecho con exito",
+  "token": "<jwt>"
+}
+```
+
+---
+
+### Log in
+
+**`POST /api/users/login`**
+
+Authenticates an existing user and returns a signed JWT.
+
+#### Request body
+
+<ParamField body="email" type="string" required>
+  The account email address.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  The account password.
+</ParamField>
+
+#### Response
+
+<ResponseField name="message" type="string">
+  Confirmation message.
+</ResponseField>
+
+<ResponseField name="token" type="string">
+  Signed JWT containing the user's `id`.
+</ResponseField>
+
+#### Error codes
+
+| Status | Meaning |
+|--------|---------|
+| 400 | `email` or `password` missing from the request body. |
+| 401 | Password does not match the account. |
+| 404 | No account found for the given email address. |
+| 500 | Database or server error. |
+
+#### Example
+
+```bash
+curl --request POST \
+  --url https://your-domain.com/api/users/login \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "email": "jane@example.com",
+    "password": "securepassword123"
+  }'
+```
+
+```json
+{
+  "message": "Inicio de sesión hecho con éxito",
+  "token": "<jwt>"
+}
+```
+
+---
+
+## Account management
+
+### Get current user
+
+**`GET /api/users`**
+
+Returns the full user object for the authenticated user, including their encrypted notes.
+
+#### Request headers
+
+<ParamField header="Authorization" type="string" required>
+  A valid JWT obtained from `/api/users/login` or `/api/users/register`.
+</ParamField>
+
+#### Response
+
+<ResponseField name="message" type="string">
+  Confirmation message.
+</ResponseField>
+
+<ResponseField name="user" type="object">
+  The full user record from the database.
+  <Expandable title="user properties">
+    <ResponseField name="id" type="string">
+      Unique user identifier.
+    </ResponseField>
+    <ResponseField name="email" type="string">
+      The user's email address.
+    </ResponseField>
+    <ResponseField name="notes" type="object[]">
+      Array of note objects. Each note has a `title` (plaintext) and `content` (AES-encrypted ciphertext).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+#### Error codes
+
+| Status | Meaning |
+|--------|---------|
+| 401 | Missing or invalid JWT. |
+| 500 | Database or server error. |
+
+#### Example
+
+```bash
+curl --request GET \
+  --url https://your-domain.com/api/users \
+  --header 'Authorization: <jwt>'
+```
+
+```json
+{
+  "message": "Datos obtenidos correctamente",
+  "user": {
+    "id": "b3f1...",
+    "email": "jane@example.com",
+    "notes": [
+      {
+        "title": "Meeting notes",
+        "content": "U2FsdGVkX1..."
+      }
+    ]
+  }
+}
+```
+
+---
+
+### Update password
+
+**`PUT /api/users`**
+
+Changes the authenticated user's password. The new password must differ from the current one.
+
+#### Request headers
+
+<ParamField header="Authorization" type="string" required>
+  A valid JWT.
+</ParamField>
+
+#### Request body
+
+<ParamField body="password" type="string" required>
+  The user's current password.
+</ParamField>
+
+<ParamField body="newPassword" type="string" required>
+  The new password to set. Must be different from `password`.
+</ParamField>
+
+#### Response
+
+<ResponseField name="message" type="string">
+  Confirmation message.
+</ResponseField>
+
+#### Error codes
+
+| Status | Meaning |
+|--------|---------|
+| 400 | `password` missing from the request body. |
+| 401 | Missing or invalid JWT, or `password` does not match the stored password. |
+| 409 | `newPassword` is identical to the current password. |
+| 500 | Database or server error. |
+
+#### Example
+
+```bash
+curl --request PUT \
+  --url https://your-domain.com/api/users \
+  --header 'Authorization: <jwt>' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "password": "securepassword123",
+    "newPassword": "evenmoresecure456"
+  }'
+```
+
+```json
+{
+  "message": "Contraseña actualizada con exito"
+}
+```
+
+---
+
+### Delete account
+
+**`DELETE /api/users`**
+
+Permanently deletes the authenticated user's account and all associated data.
+
+<Warning>
+  This action is irreversible. All notes and account data are permanently removed from the database.
+</Warning>
+
+#### Request headers
+
+<ParamField header="Authorization" type="string" required>
+  A valid JWT.
+</ParamField>
+
+#### Request body
+
+<ParamField body="password" type="string" required>
+  The user's current password, required to confirm the deletion.
+</ParamField>
+
+#### Response
+
+<ResponseField name="message" type="string">
+  Confirmation message.
+</ResponseField>
+
+#### Error codes
+
+| Status | Meaning |
+|--------|---------|
+| 400 | `password` missing from the request body. |
+| 401 | Missing or invalid JWT, or `password` does not match the stored password. |
+| 500 | Database or server error. |
+
+#### Example
+
+```bash
+curl --request DELETE \
+  --url https://your-domain.com/api/users \
+  --header 'Authorization: <jwt>' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "password": "securepassword123"
+  }'
+```
+
+```json
+{
+  "message": "Cuenta eliminada con exito"
+}
+```
+
+---
+
+## Password reset
+
+### Request a password reset
+
+**`POST /api/users/password-reset`**
+
+Sends a password-reset email to the given address. The email contains a link with a one-time recovery token valid for 2 hours.
+
+#### Request body
+
+<ParamField body="email" type="string" required>
+  The email address registered to the account.
+</ParamField>
+
+#### Response
+
+<ResponseField name="message" type="string">
+  Confirmation message instructing the user to check their email.
+</ResponseField>
+
+#### Error codes
+
+| Status | Meaning |
+|--------|---------|
+| 403 | `email` missing from the request body. |
+| 404 | No account found for the given email address. |
+| 500 | Database or server error. |
+
+#### Example
+
+```bash
+curl --request POST \
+  --url https://your-domain.com/api/users/password-reset \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "email": "jane@example.com"
+  }'
+```
+
+```json
+{
+  "message": "Listo para cambiar tu contraseña, mira dentro del correo que tienes registrado en tu cuenta"
+}
+```
+
+---
+
+### Complete a password reset
+
+**`PUT /api/users/password-reset`**
+
+Sets a new password using the recovery token delivered by email. The token expires 2 hours after it is issued.
+
+#### Request body
+
+<ParamField body="token" type="string" required>
+  The recovery token from the password-reset email link.
+</ParamField>
+
+<ParamField body="newPassword" type="string" required>
+  The new password to set for the account.
+</ParamField>
+
+#### Response
+
+<ResponseField name="message" type="string">
+  Confirmation message.
+</ResponseField>
+
+#### Error codes
+
+| Status | Meaning |
+|--------|---------|
+| 403 | `token` or `newPassword` missing from the request body. |
+| 404 | No account matches the given recovery token. |
+| 408 | The recovery token has expired. |
+| 500 | Database or server error. |
+
+#### Example
+
+```bash
+curl --request PUT \
+  --url https://your-domain.com/api/users/password-reset \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "token": "a3f9b2c1...",
+    "newPassword": "mynewpassword789"
+  }'
+```
+
+```json
+{
+  "message": "Tus contraseñas se actualizaron correctamente, intenta reingresar de nuevo"
+}
+```
+
+---
+
+### Cancel signup
+
+**`DELETE /api/users/[token]`**
+
+Cancels a pending account registration using the cancel-signup token sent in the welcome email. This endpoint is triggered via the link in that email and requires no JWT authentication.
+
+#### Path parameters
+
+<ParamField path="token" type="string" required>
+  The `cancel_token` generated at registration time. Tokens expire 24 hours after the account is created.
+</ParamField>
+
+#### Response
+
+<ResponseField name="message" type="string">
+  Confirmation that the account has been deleted.
+</ResponseField>
+
+#### Error codes
+
+| Status | Meaning |
+|--------|---------|
+| 403 | `token` path parameter is missing. |
+| 404 | No account found matching the given cancel token. |
+| 408 | The cancel token has expired (more than 24 hours have passed since registration). |
+| 500 | Database or server error. |
+
+#### Example
+
+```bash
+curl --request DELETE \
+  --url https://list-app.vercel.app/api/users/a3f9b2c1...
+```
+
+```json
+{
+  "message": "Cuenta de usuario borrada con éxito"
+}
+```

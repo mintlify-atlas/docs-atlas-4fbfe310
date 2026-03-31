@@ -1,0 +1,103 @@
+{
+  "projectType": "saas",
+  "projectName": "CloudBook",
+  "projectDescription": "CloudBook is a secure, cloud-based note-taking web and mobile application that encrypts user data end-to-end and offers free and paid tiers.",
+  "theme": "almond",
+  "primaryColor": "#2563eb",
+  "lightColor": "#eff6ff",
+  "darkColor": "#1e3a8a",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "download"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/notes",
+              "features/security",
+              "features/editor"
+            ]
+          },
+          {
+            "group": "Account & Security",
+            "pages": [
+              "account/registration",
+              "account/password-reset",
+              "account/delete-account"
+            ]
+          },
+          {
+            "group": "Legal & Support",
+            "pages": [
+              "support/bug-reports",
+              "support/terms",
+              "support/changelog"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api/overview",
+              "api/authentication"
+            ]
+          },
+          {
+            "group": "Endpoints",
+            "pages": [
+              "api/users",
+              "api/notes",
+              "api/reports",
+              "api/status"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "End-to-end AES encrypted notes stored in the cloud",
+    "JWT-based authentication with secure session management",
+    "Password hashing with bcrypt",
+    "Password recovery via email token (Nodemailer)",
+    "Registration cancellation within 24 hours via email token",
+    "In-browser rich text editor with Markdown/TXT/HTML export",
+    "Cross-platform support: web, Android, and Windows (Flutter)",
+    "Admin dashboard for managing bug reports",
+    "Server and database status endpoint",
+    "CRUD operations for user accounts and notes"
+  ],
+  "publicApiSurface": [
+    "POST /api/users/register",
+    "POST /api/users/login",
+    "GET /api/users",
+    "PUT /api/users",
+    "DELETE /api/users",
+    "POST /api/users/password-reset",
+    "PUT /api/users/password-reset",
+    "GET /api/users/[token]",
+    "POST /api/notes",
+    "GET /api/notes (via user GET)",
+    "PUT /api/notes",
+    "DELETE /api/notes",
+    "POST /api/notes/decrypt",
+    "POST /api/reports",
+    "GET /api/reports",
+    "DELETE /api/reports/[id]",
+    "GET /api/status",
+    "GET /api/admin"
+  ]
+}

@@ -1,0 +1,114 @@
+---
+title: "Authentication"
+description: "How to register, log in, and pass your JWT token to authenticated CloudBook API endpoints."
+---
+
+The CloudBook API uses JWT (JSON Web Tokens) for authentication. You obtain a token by registering or logging in, then include it in every subsequent request.
+
+<Warning>
+  Store your token securely — for example, in a secure HTTP-only cookie or a server-side session store. Do not expose it in client-side JavaScript, browser local storage, or public source code.
+</Warning>
+
+## Getting a token
+
+Both endpoints below return a `token` field on success. Use that token for all authenticated requests.
+
+### Register a new account
+
+`POST /api/users/register`
+
+Creates a new user account and returns a token immediately. CloudBook also sends a confirmation email that lets the user cancel the registration within 24 hours.
+
+**Request body**
+
+| Field      | Type   | Required | Description          |
+|------------|--------|----------|----------------------|
+| `email`    | string | Yes      | The user's email address. Must be unique. |
+| `password` | string | Yes      | The user's password. Stored as a bcrypt hash. |
+
+**Success response — `200 OK`**
+
+```json
+{
+  "message": "Registro hecho con exito",
+  "token": "<jwt-token>"
+}
+```
+
+**Error responses**
+
+| Status | Condition                        |
+|--------|----------------------------------|
+| `400`  | `email` or `password` is missing. |
+| `409`  | An account with that email already exists. |
+| `500`  | A server or database error occurred. |
+
+### Log in to an existing account
+
+`POST /api/users/login`
+
+Authenticates a user with their email and password and returns a token.
+
+**Request body**
+
+| Field      | Type   | Required | Description          |
+|------------|--------|----------|----------------------|
+| `email`    | string | Yes      | The registered email address. |
+| `password` | string | Yes      | The account password. |
+
+**Success response — `200 OK`**
+
+```json
+{
+  "message": "Inicio de sesión hecho con éxito",
+  "token": "<jwt-token>"
+}
+```
+
+**Error responses**
+
+| Status | Condition                                 |
+|--------|-------------------------------------------|
+| `400`  | `email` or `password` is missing.         |
+| `401`  | Password does not match.                  |
+| `404`  | No account found for that email address.  |
+| `500`  | A server or database error occurred.      |
+
+## Using the token
+
+Pass the token in the `Authorization` header of every authenticated request. Do not include a `Bearer` prefix — the server reads the raw token value.
+
+```
+Authorization: <your-token>
+```
+
+The token is signed with the server's JWT secret and contains the user's `id`. It has no expiry, so it remains valid until the account is deleted or the server secret is rotated.
+
+<CodeGroup>
+
+```bash curl
+curl https://list-app.vercel.app/api/notes \
+  -H "Authorization: <your-token>"
+```
+
+```javascript JavaScript (fetch)
+const response = await fetch("https://list-app.vercel.app/api/notes", {
+  headers: {
+    "Authorization": token,
+    "Content-Type": "application/json",
+  },
+});
+
+const data = await response.json();
+```
+
+</CodeGroup>
+
+## Token errors
+
+If the `Authorization` header is missing or the token is invalid, the API returns a `401` response.
+
+| Response message           | Cause                                              |
+|----------------------------|----------------------------------------------------|
+| `"Credenciales no ingresadas"` | The `Authorization` header was not included in the request. |
+| `"Credenciales invalidas"`     | The token is malformed, has been tampered with, or was signed with a different secret. |

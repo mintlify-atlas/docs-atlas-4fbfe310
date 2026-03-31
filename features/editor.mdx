@@ -1,0 +1,93 @@
+---
+title: 'In-browser editor'
+description: 'Write and format notes in your browser without an account, then export to Markdown, plain text, or HTML.'
+---
+
+The CloudBook editor is a free in-browser scratchpad available at [https://list-app.vercel.app/try](https://list-app.vercel.app/try). No account or login is required — open the page and start writing immediately.
+
+Use it to draft a note before saving it to your account, write something quick, or experiment with the formatting tools.
+
+## How to use the editor
+
+<Steps>
+  <Step title="Open the editor">
+    Go to [https://list-app.vercel.app/try](https://list-app.vercel.app/try). The editor loads with a blank canvas ready for input.
+  </Step>
+  <Step title="Click and start typing">
+    The main area is a `contentEditable` canvas. Click anywhere in the white area below the toolbar and begin typing.
+  </Step>
+  <Step title="Format your text">
+    Select any text you've typed, then click a button in the toolbar to apply formatting:
+
+    - **Negrita** — bolds the selected text
+    - **Título** — applies a large, bold heading style (h1)
+    - **Subtítulo** — applies a medium, semibold subheading style (h2)
+
+    Formatting is applied to whatever text you have selected at the time you click the button.
+  </Step>
+  <Step title="Export your document">
+    When you're ready to save your work, click one of the export buttons in the toolbar:
+
+    - **Descargar .md** — downloads a `.md` file with Markdown syntax
+    - **Descargar .txt** — downloads a `.txt` file with plain text (no formatting)
+    - **Descargar .html** — downloads a `.html` file with inline styles
+
+    The file is saved to your browser's default download location as `documento.<ext>`.
+  </Step>
+</Steps>
+
+<Note>
+  The editor does not save content to your CloudBook account. If you close the tab, your text is lost. Export your document before leaving the page.
+</Note>
+
+## Export format examples
+
+Each export format converts the editor's rich formatting differently. The examples below show the same document exported in each format.
+
+Source text: a bold phrase, a heading, and a subheading.
+
+<Tabs>
+  <Tab title="Markdown (.md)">
+    Bold text becomes `**text**`, titles become `# text`, and subtitles become `## text`. All other HTML tags are stripped.
+
+    ```markdown
+    # Project ideas
+
+    ## Research phase
+
+    Start with **competitive analysis** before writing any code.
+    ```
+  </Tab>
+  <Tab title="Plain text (.txt)">
+    All formatting is removed. The export contains only the raw characters visible in the editor, with no Markdown syntax or HTML.
+
+    ```text
+    Project ideas
+
+    Research phase
+
+    Start with competitive analysis before writing any code.
+    ```
+  </Tab>
+  <Tab title="HTML (.html)">
+    Formatting is preserved using inline styles. Title spans become `style="font-size:24px;font-weight:bold;"` and subtitle spans become `style="font-size:18px;font-weight:600;"`. Bold text remains wrapped in `<b>` tags.
+
+    ```html
+    <span style="font-size:24px;font-weight:bold;">Project ideas</span>
+    <span style="font-size:18px;font-weight:600;">Research phase</span>
+    Start with <b>competitive analysis</b> before writing any code.
+    ```
+  </Tab>
+</Tabs>
+
+## Formatting reference
+
+| Toolbar button | Format applied    | Markdown output | HTML output                                       |
+| -------------- | ----------------- | --------------- | ------------------------------------------------- |
+| **Negrita**    | Bold              | `**text**`      | `<b>text</b>`                                     |
+| **Título**     | Heading (h1)      | `# text`        | `<span style="font-size:24px;font-weight:bold;">` |
+| **Subtítulo**  | Subheading (h2)   | `## text`       | `<span style="font-size:18px;font-weight:600;">`  |
+
+<Tip>
+  You must select text before clicking a formatting button. Clicking a button with no selection active has no effect.
+</Tip>

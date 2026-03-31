@@ -1,0 +1,48 @@
+---
+title: 'Status'
+description: 'Health check endpoint for monitoring CloudBook server and database availability.'
+---
+
+## Check server status
+
+**`GET /api/status`**
+
+Returns the health of the CloudBook server and its Supabase database connection. No authentication is required. Use this endpoint for uptime monitoring, readiness probes, or any integration that needs to verify the service is operational before making further requests.
+
+A `200` response confirms both the server and the database are reachable. A `500` response indicates the server is running but the database connection has failed.
+
+#### Response
+
+<ResponseField name="message" type="string">
+  A status message confirming that the server and database are operating correctly.
+</ResponseField>
+
+#### Error codes
+
+| Status | Meaning |
+|--------|---------|
+| 500 | The server is running but could not reach the database, or an unexpected server error occurred. |
+
+#### Example
+
+```bash
+curl --request GET \
+  --url https://your-domain.com/api/status
+```
+
+**200 — healthy**
+
+```json
+{
+  "message": "La base de datos y servidor están funcionando de manera correcta"
+}
+```
+
+**500 — database unreachable**
+
+```json
+{
+  "message": "Hubo un error al quererse contectar a la base de datos",
+  "error": "<supabase error message>"
+}
+```
